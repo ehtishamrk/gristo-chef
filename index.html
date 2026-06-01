@@ -851,35 +851,51 @@ let knownOrderIds = new Set();
 
 function startOrdersListener() {
   if (!db) return;
-  const cutoff = new Date();
-  cutoff.setHours(0,0,0,0);
+  if (ordersListener) ordersListener();
 
   ordersListener = db.collection('orders')
-    .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(cutoff))
-    .where('status', 'not-in', ['served','delivered','completed','picked_up'])
-    .orderBy('timestamp', 'asc')
+    .orderBy('timestamp', 'desc')
+    .limit(100)
     .onSnapshot(snap => {
-      // New order detection
       snap.docChanges().forEach(change => {
         if (change.type === 'added' && knownOrderIds.size > 0 && !knownOrderIds.has(change.doc.id)) {
           const o = change.doc.data();
-          playChime();
-          showNotif('🍳', 'New Order!', `#${o.orderNumber} — ${o.orderType === 'dine_in' ? 'Table '+o.tableNumber : o.orderType}`);
+
+          if (!['served', 'delivered', 'completed', 'picked_up', 'cancelled'].includes(o.status)) {
+            playChime();
+            showNotif(
+              '🍳',
+              'New Order!',
+              `#${o.orderNumber} - ${o.orderType === 'dine_in' ? 'Table ' + o.tableNumber : o.orderType}`
+            );
+          }
         }
       });
 
-      allOrders = snap.docs.map(d => ({ ...d.data(), _id:d.id }));
+      allOrders = snap.docs
+        .map(d => ({ ...d.data(), _id: d.id }))
+        .filter(o => !['served', 'delivered', 'completed', 'picked_up', 'cancelled'].includes(o.status))
+        .sort((a, b) => {
+          const at = a.timestamp?.seconds || 0;
+          const bt = b.timestamp?.seconds || 0;
+          return at - bt;
+        });
+
       snap.docs.forEach(d => knownOrderIds.add(d.id));
 
-      // Update badge
-      const newCount = allOrders.filter(o => ['received','pending'].includes(o.status)).length;
-      const badge    = document.getElementById('orders-badge');
-      if (badge) { badge.textContent = newCount; badge.style.display = newCount ? 'inline-flex' : 'none'; }
+      const newCount = allOrders.filter(o => ['received', 'pending'].includes(o.status)).length;
+      const badge = document.getElementById('orders-badge');
+
+      if (badge) {
+        badge.textContent = newCount;
+        badge.style.display = newCount ? 'inline-flex' : 'none';
+      }
 
       renderOrders();
 
-      // Update KDS if open
-      if (document.getElementById('kds-panel').style.display !== 'none') renderKDS();
+      if (document.getElementById('kds-panel').style.display !== 'none') {
+        renderKDS();
+      }
     }, e => console.warn('orders listener:', e));
 }
 
