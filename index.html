@@ -1163,9 +1163,11 @@ async function submitPurchaseOrder() {
 function loadMenuForRequest() {
   if (!db) return;
   menuListener = db.collection('menu_items')
-    .where('avail', '!=', false)
     .onSnapshot(snap => {
       allMenuItems = snap.docs.map(d => ({ ...d.data(), _id:d.id }));
+      if (document.getElementById('panel-menu86')?.classList.contains('active')) {
+        renderMenu86List();
+      }
     });
 }
 
