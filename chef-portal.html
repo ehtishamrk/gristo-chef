@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Chef Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #080808;
+  --s1:       #111111;
+  --s2:       #181818;
+  --s3:       #212121;
+  --s4:       #2A2A2A;
+  --bd:       rgba(255,255,255,0.07);
+  --bd2:      rgba(255,255,255,0.13);
+  --gold:     #C8922A;
+  --gold-l:   #E8B84B;
+  --gold-d:   rgba(200,146,42,0.13);
+  --text:     #F0EBE2;
+  --tm:       #8A8070;
+  --td:       #4E4840;
+  --green:    #3D9B6A;
+  --green-d:  rgba(61,155,106,0.14);
+  --blue:     #4A7FC8;
+  --blue-d:   rgba(74,127,200,0.14);
+  --red:      #C04040;
+  --red-d:    rgba(192,64,64,0.14);
+  --amber:    #C8922A;
+  --amber-d:  rgba(200,146,42,0.14);
+  --r:        12px;
+  --rs:       8px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; }
+body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; line-height:1.5; }
+
+/* ── LOGIN ── */
+#login-overlay {
+  position:fixed; inset:0; background:var(--bg); z-index:1000;
+  display:flex; align-items:center; justify-content:center;
+}
+.login-wrap {
+  width:360px; max-width:92vw;
+  background:var(--s1); border:1px solid var(--bd);
+  border-radius:20px; padding:44px 36px; text-align:center;
+}
+.login-logo {
+  font-family:'Cormorant Garamond',serif; font-size:40px;
+  font-weight:700; color:var(--gold); letter-spacing:6px; margin-bottom:4px;
+}
+.login-role {
+  font-size:10px; letter-spacing:3.5px; text-transform:uppercase;
+  color:var(--td); margin-bottom:36px;
+}
+.login-field {
+  width:100%; background:var(--s2); border:1px solid var(--bd);
+  border-radius:var(--r); color:var(--text); font-size:15px;
+  font-family:'DM Sans',sans-serif; padding:13px 16px;
+  outline:none; transition:border-color .2s; margin-bottom:12px;
+}
+.login-field:focus { border-color:rgba(200,146,42,.45); }
+.login-field::placeholder { color:var(--td); }
+.login-err {
+  font-size:12px; color:var(--red); min-height:18px;
+  margin-bottom:10px; text-align:center;
+}
+.btn-login {
+  width:100%; background:var(--gold); color:#0A0A0A;
+  border:none; border-radius:var(--r); padding:13px;
+  font-size:14px; font-weight:700; font-family:'DM Sans',sans-serif;
+  cursor:pointer; transition:background .2s; letter-spacing:.5px;
+}
+.btn-login:hover { background:var(--gold-l); }
+.btn-login:disabled { opacity:.5; cursor:not-allowed; }
+.cf-wrap { margin-bottom:14px; display:flex; justify-content:center; }
+
+/* ── APP SHELL ── */
+#chef-app { display:none; height:100vh; display:none; flex-direction:column; }
+
+/* ── TOPBAR ── */
+#topbar {
+  background:var(--s1); border-bottom:1px solid var(--bd);
+  padding:0 18px; height:54px; display:flex; align-items:center; gap:14px;
+  flex-shrink:0; position:relative; z-index:10;
+}
+.tb-brand {
+  font-family:'Cormorant Garamond',serif; font-size:20px;
+  font-weight:700; color:var(--gold); letter-spacing:3px;
+}
+.tb-role {
+  font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--td); background:var(--s3); border:1px solid var(--bd);
+  border-radius:100px; padding:3px 10px;
+}
+.tb-spacer { flex:1; }
+.tb-time { font-size:12px; color:var(--td); font-family:'DM Mono',monospace; }
+.tb-logout {
+  font-size:12px; color:var(--tm); background:none; border:none;
+  cursor:pointer; padding:5px 10px; border-radius:var(--rs);
+  transition:background .15s;
+}
+.tb-logout:hover { background:var(--s3); }
+
+/* ── NAV TABS ── */
+#nav-tabs {
+  background:var(--s1); border-bottom:1px solid var(--bd);
+  display:flex; padding:0 18px; gap:2px; overflow-x:auto;
+  scrollbar-width:none; flex-shrink:0;
+}
+#nav-tabs::-webkit-scrollbar { display:none; }
+.nav-tab {
+  padding:11px 16px; border:none; background:transparent;
+  color:var(--tm); font-size:13px; font-weight:500; cursor:pointer;
+  white-space:nowrap; border-bottom:2px solid transparent;
+  margin-bottom:-1px; transition:all .2s; font-family:'DM Sans',sans-serif;
+  display:flex; align-items:center; gap:6px;
+}
+.nav-tab.active { color:var(--gold); border-bottom-color:var(--gold); font-weight:600; }
+.nav-tab:hover:not(.active) { color:var(--text); }
+.tab-badge {
+  background:var(--red); color:#fff; font-size:9px; font-weight:700;
+  min-width:16px; height:16px; border-radius:100px;
+  display:inline-flex; align-items:center; justify-content:center; padding:0 4px;
+}
+
+/* ── PANELS ── */
+.panel { display:none; flex:1; overflow-y:auto; padding:16px; }
+.panel.active { display:block; }
+
+/* ── PAGE HEADER ── */
+.page-hd {
+  display:flex; align-items:center; gap:12px; margin-bottom:16px;
+  flex-wrap:wrap;
+}
+.page-title {
+  font-family:'Cormorant Garamond',serif; font-size:26px;
+  font-weight:700; color:var(--text);
+}
+
+/* ── FILTER BAR ── */
+.filter-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.fbtn {
+  padding:6px 14px; border-radius:100px; border:1px solid var(--bd);
+  background:var(--s2); color:var(--tm); font-size:12px; font-weight:500;
+  cursor:pointer; transition:all .15s; font-family:'DM Sans',sans-serif;
+}
+.fbtn.active { background:var(--gold); color:#0A0A0A; border-color:var(--gold); font-weight:700; }
+
+/* ── ORDER CARDS ── */
+.order-card {
+  background:var(--s2); border:1px solid var(--bd);
+  border-radius:var(--r); margin-bottom:10px; overflow:hidden;
+  transition:border-color .2s;
+}
+.order-card.new-order { border-color:var(--gold); animation:newOrderPulse 2s ease-in-out 3; }
+@keyframes newOrderPulse {
+  0%,100% { box-shadow:0 0 0 0 transparent; }
+  50% { box-shadow:0 0 0 6px rgba(200,146,42,.15); }
+}
+.order-card.status-confirmed { border-left:3px solid var(--blue); }
+.order-card.status-preparing  { border-left:3px solid var(--gold); }
+.order-card.status-ready      { border-left:3px solid var(--green); }
+
+.oc-head {
+  padding:12px 16px; display:flex; align-items:center; gap:10px;
+  border-bottom:1px solid var(--bd); flex-wrap:wrap;
+}
+.oc-num {
+  font-family:'DM Mono',monospace; font-size:13px; font-weight:500;
+  color:var(--gold);
+}
+.oc-type {
+  font-size:11px; font-weight:600; letter-spacing:.5px;
+  text-transform:uppercase; color:var(--tm);
+}
+.oc-table {
+  background:var(--gold-d); border:1px solid rgba(200,146,42,.3);
+  border-radius:100px; font-size:11px; font-weight:700;
+  color:var(--gold); padding:2px 10px;
+}
+.oc-time { font-size:11px; color:var(--td); margin-left:auto; font-family:'DM Mono',monospace; }
+
+.oc-items { padding:12px 16px; border-bottom:1px solid var(--bd); }
+.oc-item-row {
+  display:flex; align-items:flex-start; gap:10px;
+  padding:5px 0; border-bottom:1px solid var(--bd);
+}
+.oc-item-row:last-child { border-bottom:none; }
+.oc-qty {
+  min-width:28px; height:28px; background:var(--s3); border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; color:var(--gold); flex-shrink:0;
+}
+.oc-item-name { flex:1; font-size:13px; font-weight:500; }
+.oc-item-note { font-size:11px; color:var(--tm); margin-top:2px; }
+.oc-item-price { font-size:12px; color:var(--td); white-space:nowrap; }
+
+.oc-foot {
+  padding:10px 16px; display:flex; align-items:center;
+  gap:8px; flex-wrap:wrap;
+}
+.oc-elapsed {
+  font-size:11px; color:var(--td); font-family:'DM Mono',monospace;
+  margin-right:auto;
+}
+.oc-elapsed.warn { color:var(--amber); }
+.oc-elapsed.late { color:var(--red); }
+
+/* ── STATUS BUTTONS ── */
+.sbtn {
+  padding:7px 14px; border-radius:var(--rs); border:1px solid var(--bd);
+  background:var(--s3); color:var(--tm); font-size:12px; font-weight:600;
+  cursor:pointer; transition:all .18s; font-family:'DM Sans',sans-serif;
+  white-space:nowrap;
+}
+.sbtn:hover { background:var(--s4); color:var(--text); }
+.sbtn-confirm  { background:var(--blue-d); color:var(--blue); border-color:rgba(74,127,200,.3); }
+.sbtn-prep     { background:var(--gold-d); color:var(--gold); border-color:rgba(200,146,42,.3); }
+.sbtn-ready    { background:var(--green-d); color:var(--green); border-color:rgba(61,155,106,.3); }
+.sbtn-done     { background:var(--s3); color:var(--tm); }
+.sbtn-call     { background:var(--blue-d); color:var(--blue); border-color:rgba(74,127,200,.3); }
+
+/* ── BADGE ── */
+.badge {
+  display:inline-flex; align-items:center; padding:3px 9px;
+  border-radius:100px; font-size:11px; font-weight:600; letter-spacing:.3px;
+}
+.badge-amber  { background:var(--amber-d); color:var(--amber); border:1px solid rgba(200,146,42,.25); }
+.badge-blue   { background:var(--blue-d);  color:var(--blue);  border:1px solid rgba(74,127,200,.25); }
+.badge-green  { background:var(--green-d); color:var(--green); border:1px solid rgba(61,155,106,.25); }
+.badge-grey   { background:var(--s3);      color:var(--tm);    border:1px solid var(--bd); }
+.badge-red    { background:var(--red-d);   color:var(--red);   border:1px solid rgba(192,64,64,.25); }
+
+/* ── PURCHASE ORDER ── */
+.po-form {
+  background:var(--s2); border:1px solid var(--bd);
+  border-radius:var(--r); padding:18px;
+}
+.po-items-list { margin-bottom:14px; }
+.po-item-row {
+  display:flex; gap:8px; align-items:center; margin-bottom:8px;
+}
+.po-item-row input, .po-item-row select {
+  background:var(--s3); border:1px solid var(--bd); border-radius:var(--rs);
+  color:var(--text); font-family:'DM Sans',sans-serif; font-size:13px;
+  padding:8px 12px; outline:none; transition:border-color .2s;
+}
+.po-item-row input:focus, .po-item-row select:focus {
+  border-color:rgba(200,146,42,.4);
+}
+.po-item-name { flex:2; }
+.po-item-qty  { flex:1; }
+.po-item-unit { flex:1; }
+.po-remove {
+  background:var(--red-d); color:var(--red); border:1px solid rgba(192,64,64,.25);
+  border-radius:var(--rs); padding:8px 10px; cursor:pointer; font-size:12px;
+  font-family:'DM Sans',sans-serif;
+}
+
+/* ── MENU 86 REQUEST ── */
+.menu86-card {
+  background:var(--s2); border:1px solid var(--bd);
+  border-radius:var(--r); padding:12px 16px; margin-bottom:8px;
+  display:flex; align-items:center; gap:12px;
+}
+.menu86-name { flex:1; font-size:13px; font-weight:600; }
+.menu86-cat  { font-size:11px; color:var(--td); }
+
+/* ── CALL LOG ── */
+.call-log-item {
+  background:var(--s2); border:1px solid var(--bd);
+  border-radius:var(--r); padding:12px 16px; margin-bottom:8px;
+  display:flex; align-items:center; gap:12px;
+}
+.call-ring { animation:ringShake .4s ease-in-out infinite; }
+@keyframes ringShake {
+  0%,100% { transform:rotate(0); }
+  25%     { transform:rotate(-8deg); }
+  75%     { transform:rotate(8deg); }
+}
+.call-status-ack { color:var(--green); font-size:12px; font-weight:600; }
+.call-status-ring { color:var(--gold); font-size:12px; font-weight:600; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align:center; padding:60px 20px; color:var(--td);
+}
+.empty-state .emoji { font-size:48px; margin-bottom:14px; }
+.empty-state h3 { font-size:16px; font-weight:600; color:var(--tm); margin-bottom:6px; }
+.empty-state p  { font-size:13px; }
+
+/* ── SPINNER ── */
+.spinner {
+  width:30px; height:30px; border:2px solid var(--s4);
+  border-top-color:var(--gold); border-radius:50%;
+  animation:spin .75s linear infinite; margin:40px auto;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── FORM ── */
+.fg  { margin-bottom:12px; }
+.fl  { display:block; font-size:11px; font-weight:600; color:var(--td); letter-spacing:.8px; text-transform:uppercase; margin-bottom:6px; }
+.fi  { width:100%; background:var(--s3); border:1px solid var(--bd); border-radius:var(--rs); color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; padding:10px 14px; outline:none; transition:border-color .2s; }
+.fi:focus { border-color:rgba(200,146,42,.4); }
+.fi::placeholder { color:var(--td); }
+textarea.fi { resize:none; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding:9px 18px; border-radius:var(--rs); border:1px solid var(--bd);
+  background:var(--s3); color:var(--text); font-size:13px; font-weight:600;
+  cursor:pointer; transition:all .18s; font-family:'DM Sans',sans-serif;
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+}
+.btn:hover { background:var(--s4); }
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+.btn-gold  { background:var(--gold); color:#0A0A0A; border-color:var(--gold); }
+.btn-gold:hover { background:var(--gold-l); }
+.btn-ghost { background:transparent; }
+.btn-ghost:hover { background:var(--s3); }
+.btn-sm    { padding:6px 12px; font-size:12px; }
+.btn-full  { width:100%; justify-content:center; }
+.btn-red   { background:var(--red-d); color:var(--red); border-color:rgba(192,64,64,.25); }
+
+/* ── TOAST ── */
+#toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+  background:var(--s1); border:1px solid var(--bd); border-radius:100px;
+  padding:10px 20px; font-size:13px; font-weight:500;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  opacity:0; z-index:9999; white-space:nowrap; pointer-events:none;
+  max-width:90vw; text-align:center;
+}
+#toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+#toast.t-success { border-color:rgba(61,155,106,.4); color:var(--green); }
+#toast.t-error   { border-color:rgba(192,64,64,.4);  color:var(--red); }
+
+/* ── NOTIFICATION PANEL ── */
+#notif-panel {
+  position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:800;
+  display:none; align-items:center; justify-content:center;
+}
+.notif-box {
+  background:var(--s1); border:1px solid var(--bd); border-radius:20px;
+  padding:32px 28px; width:340px; max-width:92vw; text-align:center;
+}
+.notif-icon { font-size:52px; margin-bottom:16px; }
+.notif-title { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:700; margin-bottom:6px; }
+.notif-sub { font-size:13px; color:var(--tm); margin-bottom:24px; }
+
+/* ── KDS PANEL ── */
+#kds-panel {
+  position:fixed; inset:0; background:var(--bg); z-index:900;
+  display:none; flex-direction:column;
+}
+.kds-header {
+  background:var(--s1); padding:12px 20px;
+  display:flex; align-items:center; gap:16px;
+  border-bottom:1px solid var(--bd);
+}
+.kds-title {
+  font-family:'Cormorant Garamond',serif; font-size:22px;
+  font-weight:700; color:var(--gold);
+}
+.kds-grid {
+  flex:1; overflow-y:auto; padding:16px;
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:12px; align-content:start;
+}
+.kds-card {
+  background:var(--s2); border:1px solid var(--bd);
+  border-radius:var(--r); overflow:hidden;
+}
+.kds-card-head {
+  background:var(--s3); padding:10px 14px;
+  display:flex; align-items:center; gap:10px;
+  border-bottom:1px solid var(--bd);
+}
+.kds-order-num {
+  font-family:'DM Mono',monospace; font-size:14px;
+  font-weight:500; color:var(--gold);
+}
+.kds-elapsed {
+  font-size:11px; font-family:'DM Mono',monospace;
+  color:var(--td); margin-left:auto;
+}
+.kds-items { padding:10px 14px; }
+.kds-item { font-size:13px; padding:4px 0; border-bottom:1px solid var(--bd); }
+.kds-item:last-child { border-bottom:none; }
+.kds-item-qty { font-weight:700; color:var(--gold); margin-right:8px; }
+.kds-foot { padding:10px 14px; display:flex; gap:8px; }
+.kds-status-bar {
+  height:4px; width:100%;
+  background:linear-gradient(90deg, var(--gold) 0%, var(--gold-d) 100%);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width:480px) {
+  #topbar { padding:0 12px; }
+  .panel { padding:12px; }
+  .oc-head { gap:6px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN OVERLAY ═══════════════════════════════════ -->
+<div id="login-overlay">
+  <div class="login-wrap">
+    <div class="login-logo" id="login-logo">GRISTO</div>
+    <div class="login-role">Chef Portal</div>
+    <input type="email" id="login-email" class="login-field" placeholder="Email address"
+      onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
+    <input type="password" id="login-pw" class="login-field" placeholder="Password"
+      onkeydown="if(event.key==='Enter')tryChefLogin()">
+    <div class="cf-wrap">
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAAA_REPLACE_WITH_YOUR_SITEKEY"
+        data-theme="dark" data-callback="onTurnstileSuccess"></div>
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <button class="btn-login" id="login-btn" onclick="tryChefLogin()" disabled>Sign In →</button>
+  </div>
+</div>
+
+<!-- ══ CHEF APP ════════════════════════════════════════ -->
+<div id="chef-app">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="tb-brand" id="tb-brand">GRISTO</div>
+    <div class="tb-role">Kitchen</div>
+    <div class="tb-spacer"></div>
+    <div class="tb-time" id="tb-time"></div>
+    <button class="tb-logout" onclick="chefLogout()">Sign Out</button>
+  </div>
+
+  <!-- NAV TABS -->
+  <div id="nav-tabs">
+    <button class="nav-tab active" id="tab-orders-btn" onclick="switchTab('orders')">
+      🍳 Orders <span class="tab-badge" id="orders-badge" style="display:none">0</span>
+    </button>
+    <button class="nav-tab" id="tab-purchase-btn" onclick="switchTab('purchase')">
+      📦 Purchase Order
+    </button>
+    <button class="nav-tab" id="tab-menu86-btn" onclick="switchTab('menu86')">
+      🚫 86 Request
+    </button>
+    <button class="nav-tab" id="tab-calls-btn" onclick="switchTab('calls')">
+      📞 Call Log <span class="tab-badge" id="calls-badge" style="display:none">0</span>
+    </button>
+    <button class="nav-tab" id="tab-kds-btn" onclick="openKDS()">
+      📺 KDS View
+    </button>
+  </div>
+
+  <!-- ── ORDERS PANEL ─────────────────────────── -->
+  <div class="panel active" id="panel-orders">
+    <div class="page-hd">
+      <div class="page-title">Incoming Orders</div>
+    </div>
+    <div class="filter-bar">
+      <button class="fbtn active" id="of-all"      onclick="setOrderFilter('all')">All</button>
+      <button class="fbtn"        id="of-new"       onclick="setOrderFilter('new')">🔴 New</button>
+      <button class="fbtn"        id="of-confirmed" onclick="setOrderFilter('confirmed')">Confirmed</button>
+      <button class="fbtn"        id="of-preparing" onclick="setOrderFilter('preparing')">Preparing</button>
+      <button class="fbtn"        id="of-ready"     onclick="setOrderFilter('ready')">Ready</button>
+    </div>
+    <div id="orders-list"><div class="spinner"></div></div>
+  </div>
+
+  <!-- ── PURCHASE ORDER PANEL ──────────────────── -->
+  <div class="panel" id="panel-purchase">
+    <div class="page-hd">
+      <div class="page-title">Purchase Request</div>
+    </div>
+    <p style="font-size:13px;color:var(--tm);margin-bottom:18px;line-height:1.6;">
+      Request supplies from management. Your request goes directly to the admin panel with a notification.
+    </p>
+    <div class="po-form">
+      <div style="font-size:11px;font-weight:700;color:var(--td);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Items Needed</div>
+      <div class="po-items-list" id="po-items-list"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addPOItem()" style="margin-bottom:18px;">+ Add Item</button>
+
+      <div class="fg">
+        <label class="fl">Urgency</label>
+        <select class="fi" id="po-urgency">
+          <option value="normal">Normal — Next delivery</option>
+          <option value="urgent">Urgent — Need today</option>
+          <option value="critical">Critical — Stopping service</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Notes for Admin</label>
+        <textarea class="fi" id="po-notes" style="height:72px;" placeholder="Any additional context…" maxlength="300"></textarea>
+      </div>
+      <button class="btn btn-gold btn-full" onclick="submitPurchaseOrder()">Send Purchase Request →</button>
+    </div>
+  </div>
+
+  <!-- ── MENU 86 REQUEST PANEL ─────────────────── -->
+  <div class="panel" id="panel-menu86">
+    <div class="page-hd">
+      <div class="page-title">86 Request</div>
+    </div>
+    <p style="font-size:13px;color:var(--tm);margin-bottom:18px;line-height:1.6;">
+      Request admin to turn off a menu item. Admin gets an instant notification and can act immediately.
+    </p>
+    <div id="menu86-list"><div class="spinner"></div></div>
+  </div>
+
+  <!-- ── CALL LOG PANEL ────────────────────────── -->
+  <div class="panel" id="panel-calls">
+    <div class="page-hd">
+      <div class="page-title">Waiter Calls</div>
+      <button class="btn btn-ghost btn-sm" onclick="clearOldCalls()">Clear Done</button>
+    </div>
+    <div id="calls-list"><div class="spinner"></div></div>
+  </div>
+
+</div><!-- /chef-app -->
+
+<!-- ── KDS FULLSCREEN PANEL ─────────────────────────── -->
+<div id="kds-panel">
+  <div class="kds-header">
+    <div class="kds-title" id="kds-brand">GRISTO — Kitchen Display</div>
+    <div class="tb-spacer"></div>
+    <div class="tb-time" id="kds-time" style="font-family:'DM Mono',monospace;font-size:14px;color:var(--td);"></div>
+    <button class="btn btn-ghost btn-sm" onclick="closeKDS()">✕ Close KDS</button>
+  </div>
+  <div class="kds-grid" id="kds-grid"></div>
+</div>
+
+<!-- ── NOTIFICATION POPUP ───────────────────────────── -->
+<div id="notif-panel">
+  <div class="notif-box">
+    <div class="notif-icon" id="notif-icon">🔔</div>
+    <div class="notif-title" id="notif-title">New Order</div>
+    <div class="notif-sub" id="notif-sub"></div>
+    <button class="btn btn-gold btn-full" onclick="dismissNotif()">Got It</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- AUDIO: new order chime -->
+<audio id="snd-new-order" preload="auto">
+  <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA..." type="audio/wav">
+</audio>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<!-- Cloudflare Turnstile -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+<script>
+// ════════════════════════════════════════════
+// FIREBASE CONFIG — replace per restaurant
+// ════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "REPLACE_WITH_YOUR_API_KEY",
+  authDomain:        "REPLACE_WITH_YOUR_AUTH_DOMAIN",
+  projectId:         "REPLACE_WITH_YOUR_PROJECT_ID",
+  storageBucket:     "REPLACE_WITH_YOUR_STORAGE_BUCKET",
+  messagingSenderId: "REPLACE_WITH_YOUR_SENDER_ID",
+  appId:             "REPLACE_WITH_YOUR_APP_ID"
+};
+
+let db = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+} catch(e) { console.warn('Firebase:', e.message); }
+
+// ── STATE ─────────────────────────────────────
+let _turnstileToken  = null;
+let currentUser      = null;
+let currentEmployee  = null;
+let allOrders        = [];
+let allMenuItems     = [];
+let orderFilter      = 'all';
+let ordersListener   = null;
+let menuListener     = null;
+let settingsListener = null;
+let callsListener    = null;
+let kdsTimer         = null;
+let settings         = {};
+
+const STATUS_LABELS = {
+  received:'New', pending:'New', confirmed:'Confirmed',
+  preparing:'Preparing', ready:'Ready', served:'Served',
+  picked_up:'Picked Up', delivered:'Delivered', completed:'Done'
+};
+const STATUS_COLORS = {
+  received:'amber', pending:'amber', confirmed:'blue',
+  preparing:'amber', ready:'green', served:'grey',
+  picked_up:'grey', delivered:'grey', completed:'grey'
+};
+
+// ── TURNSTILE ─────────────────────────────────
+function onTurnstileSuccess(token) {
+  _turnstileToken = token;
+  const btn = document.getElementById('login-btn');
+  btn.disabled = false; btn.style.opacity = '1';
+}
+
+// ── HASH EMAIL (same as admin) ────────────────
+async function hashEmail(email) {
+  const normalized = email.trim().toLowerCase();
+  const buf  = new TextEncoder().encode(normalized);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── LOGIN ─────────────────────────────────────
+async function tryChefLogin() {
+  if (!_turnstileToken) {
+    showLoginErr('Please complete the human check.');
+    return;
+  }
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pw    = document.getElementById('login-pw').value;
+  const errEl = document.getElementById('login-err');
+
+  if (!email) { showLoginErr('Enter your email'); return; }
+  if (!pw)    { showLoginErr('Enter your password'); return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Checking…';
+
+  try {
+    // STEP 1 — Role check BEFORE auth. Zero access if wrong role.
+    const hash = await hashEmail(email);
+    const roleSnap = await db.collection('employee_roles').doc(hash).get();
+
+    if (!roleSnap.exists) {
+      showLoginErr('No account found for this email.');
+      resetLoginBtn(); return;
+    }
+
+    const roleData = roleSnap.data();
+
+    if (!['chef','superadmin','admin'].includes(roleData.role)) {
+      showLoginErr('Access denied. This portal is for kitchen staff only.');
+      resetLoginBtn(); return;
+    }
+
+    if (roleData.active === false || roleData.frozen === true) {
+      showLoginErr('Your access has been suspended. Contact your manager.');
+      resetLoginBtn(); return;
+    }
+
+    // STEP 2 — Role confirmed. Now authenticate.
+    btn.textContent = 'Signing in…';
+    await firebase.auth().signInWithEmailAndPassword(email, pw);
+    // onAuthStateChanged handles the rest
+
+  } catch(e) {
+    const msg = e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found'
+      ? 'Incorrect email or password'
+      : e.message;
+    showLoginErr(msg);
+    resetLoginBtn();
+    _turnstileToken = null;
+    if (window.turnstile) turnstile.reset();
+  }
+}
+
+function showLoginErr(msg) {
+  const el = document.getElementById('login-err');
+  el.textContent = msg;
+  setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
+}
+
+function resetLoginBtn() {
+  const btn = document.getElementById('login-btn');
+  btn.disabled = false; btn.textContent = 'Sign In →';
+}
+
+// ── AUTH STATE ────────────────────────────────
+firebase.auth().onAuthStateChanged(async user => {
+  if (user) {
+    currentUser = user;
+    // Re-verify role on every auth state change (handles frozen mid-session)
+    const hash     = await hashEmail(user.email);
+    const roleSnap = await db.collection('employee_roles').doc(hash).get();
+
+    if (!roleSnap.exists || !['chef','superadmin','admin'].includes(roleSnap.data().role)
+        || roleSnap.data().active === false || roleSnap.data().frozen === true) {
+      // Access revoked — sign out immediately
+      await firebase.auth().signOut();
+      showLoginErr('Your access has been revoked. Contact your manager.');
+      return;
+    }
+
+    // Load employee record
+    const empSnap = await db.collection('employees').doc(user.uid).get();
+    currentEmployee = empSnap.exists ? empSnap.data() : { name: user.email, role: 'chef' };
+
+    // Write presence
+    writePresence(true);
+    window.addEventListener('beforeunload', () => writePresence(false));
+
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('chef-app').style.display      = 'flex';
+    initChefApp();
+
+    // Real-time role freeze check
+    db.collection('employee_roles').doc(hash).onSnapshot(snap => {
+      if (!snap.exists) { firebase.auth().signOut(); return; }
+      const d = snap.data();
+      if (d.active === false || d.frozen === true) {
+        showNotif('🔒', 'Access Suspended', 'Your access has been suspended by management.');
+        setTimeout(() => firebase.auth().signOut(), 4000);
+      }
+    });
+
+  } else {
+    currentUser     = null;
+    currentEmployee = null;
+    document.getElementById('chef-app').style.display      = 'none';
+    document.getElementById('login-overlay').style.display = 'flex';
+    if (ordersListener)   { ordersListener();   ordersListener = null; }
+    if (settingsListener) { settingsListener(); settingsListener = null; }
+    if (callsListener)    { callsListener();    callsListener = null; }
+  }
+});
+
+function writePresence(online) {
+  if (!db || !currentUser) return;
+  const ref = db.collection('presence').doc(currentUser.uid);
+  if (online) {
+    ref.set({ online:true, lastSeen:firebase.firestore.FieldValue.serverTimestamp(), portal:'chef' });
+  } else {
+    ref.set({ online:false, lastSeen:firebase.firestore.FieldValue.serverTimestamp(), portal:'chef' });
+  }
+}
+
+function chefLogout() {
+  writePresence(false);
+  firebase.auth().signOut();
+}
+
+// ── INIT ──────────────────────────────────────
+function initChefApp() {
+  tickTime();
+  setInterval(tickTime, 30000);
+  startSettingsListener();
+  startOrdersListener();
+  startCallsListener();
+  loadMenuForRequest();
+  addPOItem(); // start with one row
+}
+
+function tickTime() {
+  const t = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const el1 = document.getElementById('tb-time');
+  const el2 = document.getElementById('kds-time');
+  if (el1) el1.textContent = t;
+  if (el2) el2.textContent = t;
+}
+
+// ── SETTINGS LISTENER (real-time name + colors) ─
+function startSettingsListener() {
+  if (!db) return;
+  settingsListener = db.collection('settings').doc('global').onSnapshot(snap => {
+    if (!snap.exists) return;
+    settings = { ...settings, ...snap.data() };
+
+    // Sync restaurant name everywhere
+    const name = settings.restaurantName || 'Gristo';
+    document.getElementById('tb-brand').textContent   = name;
+    document.getElementById('login-logo').textContent = name;
+    document.getElementById('kds-brand').textContent  = name + ' — Kitchen Display';
+    document.title = name + ' — Chef Portal';
+
+    // Sync brand colors
+    if (settings.brandColors) {
+      const applyTo = settings.applyBrandTo || 'both';
+      if (['chef','both','all'].includes(applyTo)) {
+        applyBrandColors(settings.brandColors);
+      }
+    }
+  });
+}
+
+function applyBrandColors(bc) {
+  const root = document.documentElement;
+  if (bc.primary) {
+    const r = parseInt(bc.primary.slice(1,3),16);
+    const g = parseInt(bc.primary.slice(3,5),16);
+    const b = parseInt(bc.primary.slice(5,7),16);
+    root.style.setProperty('--gold',   bc.primary);
+    root.style.setProperty('--gold-l', lightenHex(bc.primary, 30));
+    root.style.setProperty('--gold-d', `rgba(${r},${g},${b},0.13)`);
+    root.style.setProperty('--amber',  bc.primary);
+    root.style.setProperty('--amber-d',`rgba(${r},${g},${b},0.14)`);
+  }
+  if (bc.bg)      root.style.setProperty('--bg',   bc.bg);
+  if (bc.surface) {
+    root.style.setProperty('--s1', bc.surface);
+    root.style.setProperty('--s2', bc.surface);
+  }
+  if (bc.text)    root.style.setProperty('--text', bc.text);
+}
+
+function lightenHex(hex, amt) {
+  const num = parseInt(hex.replace('#',''),16);
+  const r = Math.min(255, (num>>16) + amt);
+  const g = Math.min(255, ((num>>8)&0xff) + amt);
+  const b = Math.min(255, (num&0xff) + amt);
+  return '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+// ── TABS ─────────────────────────────────────
+function switchTab(t) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(`panel-${t}`).classList.add('active');
+  document.getElementById(`tab-${t}-btn`).classList.add('active');
+  if (t === 'orders')   renderOrders();
+  if (t === 'menu86')   renderMenu86List();
+  if (t === 'calls')    renderCallLog();
+}
+
+// ══════════════════════════════════════════════
+// ★ ORDERS
+// ══════════════════════════════════════════════
+let knownOrderIds = new Set();
+
+function startOrdersListener() {
+  if (!db) return;
+  const cutoff = new Date();
+  cutoff.setHours(0,0,0,0);
+
+  ordersListener = db.collection('orders')
+    .where('timestamp', '>=', firebase.firestore.Timestamp.fromDate(cutoff))
+    .where('status', 'not-in', ['served','delivered','completed','picked_up'])
+    .orderBy('timestamp', 'asc')
+    .onSnapshot(snap => {
+      // New order detection
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added' && knownOrderIds.size > 0 && !knownOrderIds.has(change.doc.id)) {
+          const o = change.doc.data();
+          playChime();
+          showNotif('🍳', 'New Order!', `#${o.orderNumber} — ${o.orderType === 'dine_in' ? 'Table '+o.tableNumber : o.orderType}`);
+        }
+      });
+
+      allOrders = snap.docs.map(d => ({ ...d.data(), _id:d.id }));
+      snap.docs.forEach(d => knownOrderIds.add(d.id));
+
+      // Update badge
+      const newCount = allOrders.filter(o => ['received','pending'].includes(o.status)).length;
+      const badge    = document.getElementById('orders-badge');
+      if (badge) { badge.textContent = newCount; badge.style.display = newCount ? 'inline-flex' : 'none'; }
+
+      renderOrders();
+
+      // Update KDS if open
+      if (document.getElementById('kds-panel').style.display !== 'none') renderKDS();
+    }, e => console.warn('orders listener:', e));
+}
+
+function setOrderFilter(f) {
+  orderFilter = f;
+  document.querySelectorAll('#panel-orders .fbtn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`of-${f}`)?.classList.add('active');
+  renderOrders();
+}
+
+function renderOrders() {
+  const con = document.getElementById('orders-list');
+  if (!con) return;
+
+  let list = [...allOrders];
+  if (orderFilter === 'new')       list = list.filter(o => ['received','pending'].includes(o.status));
+  if (orderFilter === 'confirmed') list = list.filter(o => o.status === 'confirmed');
+  if (orderFilter === 'preparing') list = list.filter(o => o.status === 'preparing');
+  if (orderFilter === 'ready')     list = list.filter(o => o.status === 'ready');
+
+  if (!list.length) {
+    con.innerHTML = `<div class="empty-state"><div class="emoji">🍳</div><h3>No orders right now</h3><p>New orders appear here in real time</p></div>`;
+    return;
+  }
+
+  con.innerHTML = '';
+  list.forEach(o => {
+    const ts      = o.timestamp?.seconds ? new Date(o.timestamp.seconds*1000) : new Date();
+    const elapsed = Math.floor((Date.now() - ts.getTime()) / 60000);
+    const elClass = elapsed >= 20 ? 'late' : elapsed >= 12 ? 'warn' : '';
+    const isNew   = ['received','pending'].includes(o.status);
+
+    const card = document.createElement('div');
+    card.className = `order-card status-${o.status}${isNew ? ' new-order' : ''}`;
+    card.id = `ocard-${o._id}`;
+
+    const typeLabel = o.orderType === 'dine_in' ? '🍽 Dine In' : o.orderType === 'delivery' ? '🛵 Delivery' : '📦 Takeaway';
+    const items     = (o.items || []).map(i =>
+      `<div class="oc-item-row">
+        <div class="oc-qty">${i.qty||1}</div>
+        <div class="oc-item-name">${escHtml(i.name)}${i.note?`<div class="oc-item-note">📝 ${escHtml(i.note)}</div>`:''}</div>
+        <div class="oc-item-price">$${((i.unitPrice||i.price||0)*(i.qty||1)).toFixed(2)}</div>
+      </div>`
+    ).join('');
+
+    // Status buttons per type + role
+    const stBtns = buildStatusButtons(o);
+
+    card.innerHTML = `
+      <div class="oc-head">
+        <span class="oc-num">#${o.orderNumber}</span>
+        <span class="oc-type">${typeLabel}</span>
+        ${o.orderType==='dine_in' ? `<span class="oc-table">T${o.tableNumber}</span>` : ''}
+        <span class="badge badge-${STATUS_COLORS[o.status]||'grey'}">${STATUS_LABELS[o.status]||o.status}</span>
+        <span class="oc-time">${ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
+      </div>
+      <div class="oc-items">${items}</div>
+      <div class="oc-foot">
+        <span class="oc-elapsed ${elClass}">⏱ ${elapsed}m ago</span>
+        ${stBtns}
+      </div>`;
+    con.appendChild(card);
+  });
+}
+
+function buildStatusButtons(o) {
+  const id = o._id;
+  let btns = '';
+
+  if (['received','pending'].includes(o.status)) {
+    btns += `<button class="sbtn sbtn-confirm" onclick="setStatus('${id}','confirmed')">✓ Confirm</button>`;
+  }
+  if (o.status === 'confirmed') {
+    btns += `<button class="sbtn sbtn-prep" onclick="setStatus('${id}','preparing')">🍳 Start Cooking</button>`;
+  }
+  if (o.status === 'preparing') {
+    btns += `<button class="sbtn sbtn-ready" onclick="markReady('${id}',${JSON.stringify(o.orderType)})">✓ Ready</button>`;
+    btns += `<button class="sbtn sbtn-call" onclick="callWaiter('${id}','${o.orderNumber}',${o.tableNumber||0})">📞 Call Waiter</button>`;
+  }
+  if (o.status === 'ready') {
+    if (o.orderType === 'takeaway') {
+      btns += `<button class="sbtn sbtn-done" onclick="setStatus('${id}','completed')">✓ Picked Up</button>`;
+    } else if (o.orderType === 'dine_in') {
+      btns += `<button class="sbtn sbtn-call" onclick="callWaiter('${id}','${o.orderNumber}',${o.tableNumber||0})">📞 Call Waiter</button>`;
+      btns += `<button class="sbtn sbtn-done" onclick="setStatus('${id}','served')">✓ Served</button>`;
+    } else if (o.orderType === 'delivery') {
+      btns += `<button class="sbtn sbtn-done" onclick="setStatus('${id}','picked_up')">✓ Rider Picked Up</button>`;
+    }
+  }
+
+  return btns;
+}
+
+async function setStatus(id, status) {
+  if (!db) return;
+  await db.collection('orders').doc(id).update({
+    status,
+    [`statusTimestamps.${status}`]: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedBy: currentEmployee?.name || 'Chef',
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(e => console.warn('setStatus:', e));
+}
+
+async function markReady(id, orderType) {
+  await setStatus(id, 'ready');
+  // Auto-prompt call waiter for dine-in
+  if (orderType === 'dine_in') {
+    const o = allOrders.find(x => x._id === id);
+    if (o) {
+      setTimeout(() => {
+        if (confirm(`Order #${o.orderNumber} is ready. Call waiter for Table ${o.tableNumber}?`)) {
+          callWaiter(id, o.orderNumber, o.tableNumber);
+        }
+      }, 300);
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+// ★ CALL WAITER
+// ══════════════════════════════════════════════
+async function callWaiter(orderId, orderNum, tableNumber) {
+  if (!db) return;
+  try {
+    await db.collection('waiter_calls').add({
+      orderId,
+      orderNumber: orderNum,
+      tableNumber: tableNumber || null,
+      calledBy:    currentEmployee?.name || 'Chef',
+      calledAt:    firebase.firestore.FieldValue.serverTimestamp(),
+      status:      'ringing',   // ringing → acknowledged
+      acknowledged:false,
+      acknowledgedBy:  null,
+      acknowledgedAt:  null,
+    });
+    toast('Waiter called — waiting for acknowledgement', 'success');
+  } catch(e) { toast('Error calling waiter', 'error'); }
+}
+
+function startCallsListener() {
+  if (!db) return;
+  const cutoff = new Date();
+  cutoff.setHours(0,0,0,0);
+  callsListener = db.collection('waiter_calls')
+    .where('calledAt', '>=', firebase.firestore.Timestamp.fromDate(cutoff))
+    .orderBy('calledAt', 'desc')
+    .onSnapshot(snap => {
+      const ringing = snap.docs.filter(d => d.data().status === 'ringing').length;
+      const badge   = document.getElementById('calls-badge');
+      if (badge) { badge.textContent = ringing; badge.style.display = ringing ? 'inline-flex' : 'none'; }
+      if (document.getElementById('panel-calls').classList.contains('active')) renderCallLog();
+    });
+}
+
+function renderCallLog() {
+  const con = document.getElementById('calls-list');
+  if (!con || !db) return;
+  const cutoff = new Date(); cutoff.setHours(0,0,0,0);
+  db.collection('waiter_calls')
+    .where('calledAt', '>=', firebase.firestore.Timestamp.fromDate(cutoff))
+    .orderBy('calledAt','desc')
+    .get()
+    .then(snap => {
+      if (!snap.docs.length) {
+        con.innerHTML = `<div class="empty-state"><div class="emoji">📞</div><h3>No calls today</h3></div>`;
+        return;
+      }
+      con.innerHTML = '';
+      snap.docs.forEach(d => {
+        const c   = d.data();
+        const ts  = c.calledAt?.seconds ? new Date(c.calledAt.seconds*1000) : new Date();
+        const ack = c.acknowledged;
+        const item = document.createElement('div');
+        item.className = 'call-log-item';
+        item.innerHTML = `
+          <span style="font-size:22px;">${ack ? '✅' : '📞'}</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;">Order #${c.orderNumber}${c.tableNumber?' · Table '+c.tableNumber:''}</div>
+            <div style="font-size:12px;color:var(--tm);">Called at ${ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} by ${c.calledBy||'Chef'}</div>
+            ${ack ? `<div class="call-status-ack">✓ Acknowledged by ${c.acknowledgedBy||'Waiter'}</div>` : `<div class="call-status-ring">🔔 Waiting for waiter…</div>`}
+          </div>`;
+        con.appendChild(item);
+      });
+    });
+}
+
+async function clearOldCalls() {
+  if (!db) return;
+  const snap = await db.collection('waiter_calls').where('acknowledged','==',true).get();
+  const batch = db.batch();
+  snap.docs.forEach(d => batch.delete(d.ref));
+  await batch.commit().catch(e => console.warn(e));
+  toast('Cleared acknowledged calls');
+  renderCallLog();
+}
+
+// ══════════════════════════════════════════════
+// ★ PURCHASE ORDER
+// ══════════════════════════════════════════════
+let poItemCount = 0;
+
+function addPOItem() {
+  poItemCount++;
+  const list = document.getElementById('po-items-list');
+  const row  = document.createElement('div');
+  row.className = 'po-item-row';
+  row.id = `po-row-${poItemCount}`;
+  const id = poItemCount;
+  row.innerHTML = `
+    <input type="text" class="po-item-name" placeholder="Item name (e.g. Chicken, Tomatoes)" id="po-name-${id}">
+    <input type="number" class="po-item-qty" placeholder="Qty" min="1" id="po-qty-${id}">
+    <input type="text" class="po-item-unit" placeholder="Unit (kg, pcs…)" id="po-unit-${id}">
+    <button class="po-remove" onclick="removePORow(${id})">✕</button>`;
+  list.appendChild(row);
+}
+
+function removePORow(id) {
+  const el = document.getElementById(`po-row-${id}`);
+  if (el) el.remove();
+}
+
+async function submitPurchaseOrder() {
+  if (!db) return;
+  const rows    = document.querySelectorAll('.po-item-row');
+  const items   = [];
+  let hasItem   = false;
+
+  rows.forEach(row => {
+    const nameEl = row.querySelector('[id^="po-name-"]');
+    const qtyEl  = row.querySelector('[id^="po-qty-"]');
+    const unitEl = row.querySelector('[id^="po-unit-"]');
+    const name   = nameEl?.value.trim();
+    const qty    = qtyEl?.value;
+    const unit   = unitEl?.value.trim();
+    if (name) { items.push({ name, qty: qty||'', unit: unit||'' }); hasItem = true; }
+  });
+
+  if (!hasItem) { toast('Add at least one item', 'error'); return; }
+
+  const urgency = document.getElementById('po-urgency').value;
+  const notes   = document.getElementById('po-notes').value.trim();
+
+  const btn = document.querySelector('#panel-purchase .btn-gold');
+  btn.disabled = true; btn.textContent = 'Sending…';
+
+  try {
+    await db.collection('purchase_orders').add({
+      items,
+      urgency,
+      notes,
+      requestedBy:   currentEmployee?.name || 'Chef',
+      requestedByUid:currentUser?.uid || '',
+      status:        'pending',
+      createdAt:     firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Write admin notification
+    await db.collection('admin_notifications').add({
+      type:    'purchase_order',
+      title:   'Purchase Request',
+      message: `${currentEmployee?.name||'Chef'} requested ${items.length} item(s) — Urgency: ${urgency}`,
+      read:    false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Clear form
+    document.getElementById('po-items-list').innerHTML = '';
+    document.getElementById('po-notes').value = '';
+    document.getElementById('po-urgency').value = 'normal';
+    poItemCount = 0;
+    addPOItem();
+
+    toast('Purchase request sent to admin', 'success');
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send Purchase Request →';
+  }
+}
+
+// ══════════════════════════════════════════════
+// ★ MENU 86 REQUEST
+// ══════════════════════════════════════════════
+function loadMenuForRequest() {
+  if (!db) return;
+  menuListener = db.collection('menu_items')
+    .where('avail', '!=', false)
+    .onSnapshot(snap => {
+      allMenuItems = snap.docs.map(d => ({ ...d.data(), _id:d.id }));
+    });
+}
+
+function renderMenu86List() {
+  const con = document.getElementById('menu86-list');
+  if (!con) return;
+
+  const available = allMenuItems.filter(i => i.avail !== false);
+  if (!available.length) {
+    con.innerHTML = `<div class="empty-state"><div class="emoji">🍽</div><h3>No items available</h3></div>`;
+    return;
+  }
+
+  con.innerHTML = '';
+  available.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'menu86-card';
+    card.innerHTML = `
+      <div>
+        <div class="menu86-name">${escHtml(item.name)}</div>
+        <div class="menu86-cat">${escHtml(item.cat||item.category||'')}</div>
+      </div>
+      <button class="btn btn-red btn-sm" onclick="request86('${item._id}','${escHtml(item.name)}')">Request 86</button>`;
+    con.appendChild(card);
+  });
+}
+
+async function request86(itemId, itemName) {
+  if (!confirm(`Request admin to turn off "${itemName}" from the menu?`)) return;
+  if (!db) return;
+  try {
+    await db.collection('admin_notifications').add({
+      type:      'menu_86_request',
+      title:     '86 Request — ' + itemName,
+      message:   `${currentEmployee?.name||'Chef'} requests to remove "${itemName}" from the menu (ingredient issue).`,
+      itemId,
+      itemName,
+      read:      false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    toast(`86 request sent for "${itemName}"`, 'success');
+  } catch(e) { toast('Error sending request', 'error'); }
+}
+
+// ══════════════════════════════════════════════
+// ★ KDS — Kitchen Display Screen
+// ══════════════════════════════════════════════
+function openKDS() {
+  const panel = document.getElementById('kds-panel');
+  panel.style.display = 'flex';
+  renderKDS();
+  kdsTimer = setInterval(renderKDS, 30000); // refresh elapsed times
+}
+
+function closeKDS() {
+  document.getElementById('kds-panel').style.display = 'none';
+  if (kdsTimer) clearInterval(kdsTimer);
+}
+
+function renderKDS() {
+  const grid = document.getElementById('kds-grid');
+  if (!grid) return;
+
+  const active = allOrders.filter(o => !['served','delivered','completed','picked_up'].includes(o.status));
+  if (!active.length) {
+    grid.innerHTML = `<div style="color:var(--td);font-size:15px;padding:40px;text-align:center;grid-column:1/-1;">✓ All clear — no pending orders</div>`;
+    return;
+  }
+
+  grid.innerHTML = '';
+  active.forEach(o => {
+    const ts      = o.timestamp?.seconds ? new Date(o.timestamp.seconds*1000) : new Date();
+    const elapsed = Math.floor((Date.now()-ts.getTime())/60000);
+    const color   = elapsed >= 20 ? 'var(--red)' : elapsed >= 12 ? 'var(--amber)' : 'var(--td)';
+    const items   = (o.items||[]).map(i =>
+      `<div class="kds-item"><span class="kds-item-qty">${i.qty||1}×</span>${escHtml(i.name)}</div>`
+    ).join('');
+
+    const card = document.createElement('div');
+    card.className = 'kds-card';
+    card.innerHTML = `
+      <div class="kds-status-bar" style="background:${o.status==='preparing'?'var(--gold)':o.status==='ready'?'var(--green)':'var(--s4)'};"></div>
+      <div class="kds-card-head">
+        <span class="kds-order-num">#${o.orderNumber}</span>
+        <span style="font-size:11px;color:var(--tm);text-transform:uppercase;letter-spacing:.5px;">${o.orderType==='dine_in'?'T'+o.tableNumber:o.orderType}</span>
+        <span class="kds-elapsed" style="color:${color};">${elapsed}m</span>
+      </div>
+      <div class="kds-items">${items}</div>
+      <div class="kds-foot">
+        <span class="badge badge-${STATUS_COLORS[o.status]||'grey'}">${STATUS_LABELS[o.status]||o.status}</span>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ══════════════════════════════════════════════
+// ★ NOTIFICATIONS
+// ══════════════════════════════════════════════
+function showNotif(icon, title, sub) {
+  document.getElementById('notif-icon').textContent  = icon;
+  document.getElementById('notif-title').textContent = title;
+  document.getElementById('notif-sub').textContent   = sub;
+  document.getElementById('notif-panel').style.display = 'flex';
+}
+
+function dismissNotif() {
+  document.getElementById('notif-panel').style.display = 'none';
+}
+
+function playChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [440, 554, 659].forEach((freq, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0, ctx.currentTime + i*0.18);
+      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + i*0.18 + 0.05);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + i*0.18 + 0.35);
+      osc.start(ctx.currentTime + i*0.18);
+      osc.stop(ctx.currentTime + i*0.18 + 0.4);
+    });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+// ★ UTILS
+// ══════════════════════════════════════════════
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let _toastTimer = null;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'show' + (type ? ' t-'+type : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+}
+</script>
+</body>
+</html>
