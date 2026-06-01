@@ -444,9 +444,9 @@ textarea.fi { resize:none; }
     <button class="nav-tab" id="tab-purchase-btn" onclick="switchTab('purchase')">
       📦 Purchase Order
     </button>
-    <button class="nav-tab" id="tab-menu86-btn" onclick="switchTab('menu86')">
-      🚫 86 Request
-    </button>
+<button class="nav-tab" id="tab-menu86-btn" onclick="switchTab('menu86')">
+  📝 Menu Requests
+</button>
     <button class="nav-tab" id="tab-calls-btn" onclick="switchTab('calls')">
       📞 Call Log <span class="tab-badge" id="calls-badge" style="display:none">0</span>
     </button>
@@ -500,15 +500,31 @@ textarea.fi { resize:none; }
   </div>
 
   <!-- ── MENU 86 REQUEST PANEL ─────────────────── -->
-  <div class="panel" id="panel-menu86">
-    <div class="page-hd">
-      <div class="page-title">86 Request</div>
-    </div>
-    <p style="font-size:13px;color:var(--tm);margin-bottom:18px;line-height:1.6;">
-      Request admin to turn off a menu item. Admin gets an instant notification and can act immediately.
-    </p>
-    <div id="menu86-list"><div class="spinner"></div></div>
+<div class="panel" id="panel-menu86">
+  <div class="page-hd">
+    <div class="page-title">Menu Requests</div>
   </div>
+
+  <p style="font-size:13px;color:var(--tm);margin-bottom:18px;line-height:1.6;">
+    Request admin to remove an existing item or add a new menu item.
+  </p>
+
+  <div class="po-form" style="margin-bottom:18px;">
+    <div class="fg">
+      <label class="fl">New item name</label>
+      <input class="fi" id="new-menu-name" placeholder="Example: Chicken Alfredo">
+    </div>
+
+    <div class="fg">
+      <label class="fl">Notes for admin</label>
+      <textarea class="fi" id="new-menu-notes" style="height:72px;" placeholder="Ingredients, price suggestion, category, reason..."></textarea>
+    </div>
+
+    <button class="btn btn-gold btn-full" onclick="requestNewMenuItem()">Request New Item</button>
+  </div>
+
+  <div id="menu86-list"><div class="spinner"></div></div>
+</div>
 
   <!-- ── CALL LOG PANEL ────────────────────────── -->
   <div class="panel" id="panel-calls">
@@ -1181,54 +1197,110 @@ async function submitPurchaseOrder() {
 // ══════════════════════════════════════════════
 function loadMenuForRequest() {
   if (!db) return;
-  menuListener = db.collection('menu_items')
-    .onSnapshot(snap => {
-      allMenuItems = snap.docs.map(d => ({ ...d.data(), _id:d.id }));
-      if (document.getElementById('panel-menu86')?.classList.contains('active')) {
-        renderMenu86List();
-      }
-    });
+  if (menuListener) menuListener();
+
+  menuListener = db.collection('menu_items').onSnapshot(snap => {
+    allMenuItems = snap.docs
+      .map(d => ({ ...d.data(), _id: d.id }))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    renderMenu86List();
+  }, e => {
+    console.warn('menu listener:', e);
+    document.getElementById('menu86-list').innerHTML =
+      `<div class="empty-state"><h3>Could not load menu</h3><p>${escHtml(e.message)}</p></div>`;
+  });
 }
 
 function renderMenu86List() {
   const con = document.getElementById('menu86-list');
   if (!con) return;
 
-  const available = allMenuItems.filter(i => i.avail !== false);
-  if (!available.length) {
-    con.innerHTML = `<div class="empty-state"><div class="emoji">🍽</div><h3>No items available</h3></div>`;
+  if (!allMenuItems.length) {
+    con.innerHTML = `<div class="empty-state"><div class="emoji">🍽</div><h3>No menu items found</h3></div>`;
     return;
   }
 
   con.innerHTML = '';
-  available.forEach(item => {
+
+  allMenuItems.forEach(item => {
     const card = document.createElement('div');
     card.className = 'menu86-card';
+
+    const isAvailable = item.avail !== false;
+
     card.innerHTML = `
       <div>
-        <div class="menu86-name">${escHtml(item.name)}</div>
-        <div class="menu86-cat">${escHtml(item.cat||item.category||'')}</div>
+        <div class="menu86-name">${escHtml(item.name || 'Unnamed item')}</div>
+        <div class="menu86-cat">${escHtml(item.cat || item.category || '')} · ${isAvailable ? 'Available' : 'Currently off'}</div>
       </div>
-      <button class="btn btn-red btn-sm" onclick="request86('${item._id}','${escHtml(item.name)}')">Request 86</button>`;
+
+      <button class="btn btn-red btn-sm" onclick="requestMenuRemoval('${item._id}', '${escHtml(item.name || '')}')">
+        Request Remove
+      </button>
+    `;
+
     con.appendChild(card);
   });
 }
 
-async function request86(itemId, itemName) {
-  if (!confirm(`Request admin to turn off "${itemName}" from the menu?`)) return;
-  if (!db) return;
+async function requestMenuRemoval(itemId, itemName) {
+  if (!confirm(`Request admin to remove "${itemName}" from the menu?`)) return;
+
   try {
     await db.collection('admin_notifications').add({
-      type:      'menu_86_request',
-      title:     '86 Request — ' + itemName,
-      message:   `${currentEmployee?.name||'Chef'} requests to remove "${itemName}" from the menu (ingredient issue).`,
+      type: 'menu_change_request',
+      action: 'remove_item',
+      title: 'Menu Removal Request - ' + itemName,
+      message: `${currentEmployee?.name || 'Chef'} requests to remove "${itemName}" from the menu.`,
       itemId,
       itemName,
-      read:      false,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      requestedBy: currentEmployee?.name || 'Chef',
+      requestedByUid: currentUser?.uid || '',
+      status: 'pending',
+      read: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    toast(`86 request sent for "${itemName}"`, 'success');
-  } catch(e) { toast('Error sending request', 'error'); }
+
+    toast(`Removal request sent for "${itemName}"`, 'success');
+  } catch (e) {
+    console.warn('menu removal request:', e);
+    toast('Error sending removal request', 'error');
+  }
+}
+
+async function requestNewMenuItem() {
+  const name = document.getElementById('new-menu-name').value.trim();
+  const notes = document.getElementById('new-menu-notes').value.trim();
+
+  if (!name) {
+    toast('Enter the new item name', 'error');
+    return;
+  }
+
+  try {
+    await db.collection('admin_notifications').add({
+      type: 'menu_change_request',
+      action: 'add_item',
+      title: 'New Menu Item Request - ' + name,
+      message: `${currentEmployee?.name || 'Chef'} requests a new menu item: "${name}". ${notes}`,
+      itemName: name,
+      notes,
+      requestedBy: currentEmployee?.name || 'Chef',
+      requestedByUid: currentUser?.uid || '',
+      status: 'pending',
+      read: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    document.getElementById('new-menu-name').value = '';
+    document.getElementById('new-menu-notes').value = '';
+
+    toast(`New item request sent for "${name}"`, 'success');
+  } catch (e) {
+    console.warn('new menu item request:', e);
+    toast('Error sending new item request', 'error');
+  }
 }
 
 // ══════════════════════════════════════════════
