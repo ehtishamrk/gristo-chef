@@ -683,17 +683,7 @@ function resetLoginBtn() {
 }
 
 // ── PRE-LOGIN SETTINGS (updates login modal name before user signs in) ─────
-(function preloadSettings() {
-  if (!db) return;
-  db.collection('settings').doc('global').get().then(snap => {
-    if (!snap.exists) return;
-    const name = snap.data().restaurantName;
-    if (name) {
-      const el = document.getElementById('login-logo');
-      if (el) el.textContent = name;
-    }
-  }).catch(() => {});
-})();
+startSettingsListener();
   
 // ── AUTH STATE ────────────────────────────────
 firebase.auth().onAuthStateChanged(async user => {
@@ -739,7 +729,6 @@ firebase.auth().onAuthStateChanged(async user => {
     document.getElementById('chef-app').style.display      = 'none';
     document.getElementById('login-overlay').style.display = 'flex';
     if (ordersListener)   { ordersListener();   ordersListener = null; }
-    if (settingsListener) { settingsListener(); settingsListener = null; }
     if (callsListener)    { callsListener();    callsListener = null; }
   }
 });
@@ -779,27 +768,41 @@ function tickTime() {
 }
 
 // ── SETTINGS LISTENER (real-time name + colors) ─
+function applyRestaurantName(name) {
+  const restaurantName = name || localStorage.getItem('restaurantName') || 'Restaurant';
+
+  document.getElementById('login-logo').textContent = restaurantName;
+  document.getElementById('tb-brand').textContent = restaurantName;
+
+  const kdsBrand = document.getElementById('kds-brand');
+  if (kdsBrand) kdsBrand.textContent = restaurantName + ' - Kitchen Display';
+
+  document.title = restaurantName + ' - Chef Portal';
+}
+
 function startSettingsListener() {
-  if (!db) return;
+  if (!db || settingsListener) return;
+
+  const cachedName = localStorage.getItem('restaurantName');
+  if (cachedName) applyRestaurantName(cachedName);
+
   settingsListener = db.collection('settings').doc('global').onSnapshot(snap => {
     if (!snap.exists) return;
+
     settings = { ...settings, ...snap.data() };
 
-    // Sync restaurant name everywhere
-    const name = settings.restaurantName || 'Gristo';
-    document.getElementById('tb-brand').textContent   = name;
-    document.getElementById('login-logo').textContent = name;
-    document.getElementById('kds-brand').textContent  = name + ' — Kitchen Display';
-    document.title = name + ' — Chef Portal';
+    if (settings.restaurantName) {
+      localStorage.setItem('restaurantName', settings.restaurantName);
+      applyRestaurantName(settings.restaurantName);
+    }
 
-    // Sync brand colors
     if (settings.brandColors) {
       const applyTo = settings.applyBrandTo || 'both';
-      if (['chef','both','all'].includes(applyTo)) {
+      if (['chef', 'both', 'all'].includes(applyTo)) {
         applyBrandColors(settings.brandColors);
       }
     }
-  });
+  }, err => console.warn('settings listener:', err));
 }
 
 function applyBrandColors(bc) {
