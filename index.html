@@ -692,10 +692,27 @@ function showLoginErr(msg) {
   el.textContent = msg;
   setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
 }
+function resetPortalLoginAfterLogout() {
+  _turnstileToken = null;
 
+  const btn = document.getElementById('login-btn');
+  if (btn) {
+    btn.textContent = 'Sign In →';
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+  }
+
+  if (window.turnstile) {
+    try { turnstile.reset(); } catch(e) {}
+  }
+}
 function resetLoginBtn() {
   const btn = document.getElementById('login-btn');
-  btn.disabled = false; btn.textContent = 'Sign In →';
+  if (!btn) return;
+
+  btn.textContent = 'Sign In →';
+  btn.disabled = !_turnstileToken;
+  btn.style.opacity = _turnstileToken ? '1' : '0.5';
 }
 
 // ── PRE-LOGIN SETTINGS (updates login modal name before user signs in) ─────
@@ -744,6 +761,7 @@ firebase.auth().onAuthStateChanged(async user => {
     currentEmployee = null;
     document.getElementById('chef-app').style.display      = 'none';
     document.getElementById('login-overlay').style.display = 'flex';
+    resetPortalLoginAfterLogout();
     if (ordersListener)   { ordersListener();   ordersListener = null; }
     if (callsListener)    { callsListener();    callsListener = null; }
   }
@@ -761,6 +779,7 @@ function writePresence(online) {
 
 function chefLogout() {
   writePresence(false);
+  resetPortalLoginAfterLogout();
   firebase.auth().signOut();
 }
 
