@@ -1201,6 +1201,9 @@ async function submitPurchaseOrder() {
       type:    'purchase_order',
       title:   'Purchase Request',
       message: `${currentEmployee?.name||'Chef'} requested ${items.length} item(s) — Urgency: ${urgency}`,
+      requestedBy: currentEmployee?.name || 'Chef',
+requestedByUid: currentUser?.uid || '',
+status: 'pending',
       read:    false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
