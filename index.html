@@ -780,6 +780,10 @@ firebase.auth().onAuthStateChanged(async user => {
     resetPortalLoginAfterLogout();
     if (ordersListener)   { ordersListener();   ordersListener = null; }
     if (callsListener)    { callsListener();    callsListener = null; }
+    if (staffNotificationsListener) {
+  staffNotificationsListener();
+  staffNotificationsListener = null;
+}
   }
 });
 
