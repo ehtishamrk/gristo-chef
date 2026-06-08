@@ -38,10 +38,9 @@ html, body { height:100%; overflow:hidden; }
 body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; line-height:1.5; }
 
 /* ── LOGIN ── */
-#login-overlay {
-  position:fixed; inset:0; background:var(--bg); z-index:1000;
-  display:flex; align-items:center; justify-content:center;
-}
+#login-overlay { position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; align-items:center; justify-content:center; }
+#auth-loading { position:fixed; inset:0; background:var(--bg); z-index:2000; display:flex; align-items:center; justify-content:center; }
+@keyframes spin { to { transform:rotate(360deg); } }
 .login-wrap {
   width:360px; max-width:92vw;
   background:var(--s1); border:1px solid var(--bd);
@@ -411,7 +410,8 @@ textarea.fi { resize:none; }
 <body>
 
 <!-- ══ LOGIN OVERLAY ═══════════════════════════════════ -->
-<div id="login-overlay">
+<div id="auth-loading"><div style="width:32px;height:32px;border:3px solid var(--bd);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;"></div></div>
+<div id="login-overlay" style="display:none;">
   <div class="login-wrap">
     <div class="login-logo" id="login-logo" style="visibility:hidden">Restaurant</div>
     <div class="login-role">Chef Portal</div>
@@ -774,6 +774,7 @@ if (window._sessionUnsub) { window._sessionUnsub(); window._sessionUnsub = null;
     writePresence(true);
     window.addEventListener('beforeunload', () => writePresence(false));
 
+document.getElementById('auth-loading').style.display  = 'none';
     document.getElementById('login-overlay').style.display = 'none';
     document.getElementById('chef-app').style.display      = 'flex';
     initChefApp();
@@ -792,6 +793,7 @@ if (window._sessionUnsub) { window._sessionUnsub(); window._sessionUnsub = null;
   } else {
     currentUser     = null;
     currentEmployee = null;
+document.getElementById('auth-loading').style.display  = 'none';
     document.getElementById('chef-app').style.display      = 'none';
     document.getElementById('login-overlay').style.display = 'flex';
     resetPortalLoginAfterLogout();
