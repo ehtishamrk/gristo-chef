@@ -1483,6 +1483,7 @@ document.addEventListener('click', function(e) {
 });
   
 async function requestMenuRemoval(itemId, itemName) {
+  if (!currentUser) { toast('Not logged in — please refresh', 'error'); return; }
   if (!confirm(`Request admin to remove "${itemName}" from the menu?`)) return;
 
   try {
