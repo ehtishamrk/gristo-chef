@@ -1650,7 +1650,16 @@ function renderStaffNotifications() {
         <span style="font-size:12px;color:var(--td);">${fmtStaffNotifTs(n.createdAt)}</span>
         ${!n.read ? `<span class="badge badge-amber">New</span>` : ''}
       </div>
-      <div style="font-size:13px;color:var(--tm);line-height:1.5;margin-bottom:12px;">${escHtml(n.message || '')}</div>
+<div style="font-size:13px;color:var(--tm);line-height:1.5;margin-bottom:12px;">${escHtml(n.message || '')}</div>
+      ${n.type === 'purchase_order_approved_with_changes' && n.changedItems ? `
+        <div style="margin-bottom:12px;padding:10px;background:var(--s3);border-radius:6px;">
+          <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Approved Items</div>
+          ${(n.changedItems||[]).map(i => `
+            <div style="font-size:13px;color:var(--text);padding:2px 0;">${escHtml(i.qty||'')} ${escHtml(i.unit||'')} — ${escHtml(i.name||'')}</div>
+          `).join('')}
+          ${n.adminNotes ? `<div style="margin-top:8px;font-size:12px;color:var(--tm);font-style:italic;">"${escHtml(n.adminNotes)}"</div>` : ''}
+        </div>
+      ` : ''}
       ${!n.read ? `<button class="btn btn-ghost btn-sm" onclick="markStaffNotificationRead('${n._id}')">Mark Read</button>` : ''}
     </div>
   `).join('');
