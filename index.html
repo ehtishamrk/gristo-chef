@@ -1213,17 +1213,22 @@ function buildStatusButtons(o) {
   if (o.status === 'confirmed') {
     btns += `<button class="sbtn sbtn-prep" onclick="setStatus('${id}','preparing')">🍳 Start Cooking</button>`;
   }
-  if (o.status === 'preparing') {
+if (o.status === 'preparing') {
     btns += `<button class="sbtn sbtn-ready" onclick="markReady('${id}',${JSON.stringify(o.orderType)})">✓ Ready</button>`;
-    btns += `<button class="sbtn sbtn-call" onclick="callWaiter('${id}','${o.orderNumber}',${o.tableNumber||0})">📞 Call Waiter</button>`;
+    // Call Waiter only during prep if dine-in
+    if (o.orderType === 'dine_in') {
+      btns += `<button class="sbtn sbtn-call" onclick="callWaiter('${id}','${o.orderNumber}',${o.tableNumber||0})">📞 Call Waiter</button>`;
+    }
   }
   if (o.status === 'ready') {
     if (o.orderType === 'takeaway') {
+      // No call button for takeaway
       btns += `<button class="sbtn sbtn-done" onclick="setStatus('${id}','completed')">✓ Picked Up</button>`;
     } else if (o.orderType === 'dine_in') {
       btns += `<button class="sbtn sbtn-call" onclick="callWaiter('${id}','${o.orderNumber}',${o.tableNumber||0})">📞 Call Waiter</button>`;
       btns += `<button class="sbtn sbtn-done" onclick="setStatus('${id}','served')">✓ Served</button>`;
     } else if (o.orderType === 'delivery') {
+      btns += `<button class="sbtn sbtn-call" onclick="callRider('${id}','${o.orderNumber}')">🏍 Call Rider</button>`;
       btns += `<button class="sbtn sbtn-done" onclick="setStatus('${id}','picked_up')">✓ Rider Picked Up</button>`;
     }
   }
@@ -1256,6 +1261,19 @@ async function markReady(id, orderType) {
   }
 }
 
+async function callRider(orderId, orderNum) {
+  try {
+    await db.collection('rider_calls').add({
+      orderId,
+      orderNumber: orderNum,
+      calledBy: currentEmployee?.name || 'Chef',
+      calledAt: firebase.firestore.FieldValue.serverTimestamp(),
+      status: 'ringing'
+    });
+    toast(`Rider called for Order #${orderNum}`, 'success');
+  } catch(e) { toast('Error calling rider', 'error'); }
+}
+  
 // ══════════════════════════════════════════════
 // ★ CALL WAITER
 // ══════════════════════════════════════════════
