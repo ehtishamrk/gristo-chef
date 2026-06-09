@@ -1139,11 +1139,13 @@ function renderOrders() {
     card.id = `ocard-${o._id}`;
 
     const typeLabel = o.orderType === 'dine_in' ? '🍽 Dine In' : o.orderType === 'delivery' ? '🛵 Delivery' : '📦 Takeaway';
-    const items     = (o.items || []).map(i =>
-      `<div class="oc-item-row">
+const _editable = canEditOrder(o);
+    const items     = (o.items || []).map((i, idx) =>
+      `<div class="oc-item-row${i.voided ? '" style="opacity:.35;text-decoration:line-through' : ''}">
         <div class="oc-qty">${i.qty||1}</div>
         <div class="oc-item-name">${escHtml(i.name)}${i.note?`<div class="oc-item-note">📝 ${escHtml(i.note)}</div>`:''}</div>
-        <div class="oc-item-price">$${((i.unitPrice||i.price||0)*(i.qty||1)).toFixed(2)}</div>
+        <div class="oc-item-price">${i.voided ? '<span style="font-size:9px;color:var(--red);">VOIDED</span>' : '$'+((i.unitPrice||i.price||0)*(i.qty||1)).toFixed(2)}</div>
+        ${_editable && !i.voided ? `<button onclick="chefVoidItem('${o._id}',${idx})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:10px;padding:2px 4px;flex-shrink:0;" title="Void">✕</button>` : ''}
       </div>`
     ).join('');
 
@@ -1167,6 +1169,40 @@ function renderOrders() {
   });
 }
 
+// ── ORDER EDIT PERMISSION ─────────────────────
+function canEditOrder(order) {
+  if (!settings.orderEditChef) return false;
+  const win = (settings.orderEditWindow ?? 10) * 60 * 1000;
+  if (win === 0) return false;
+  const ts = order.timestamp?.seconds ? order.timestamp.seconds * 1000 : Date.now();
+  return (Date.now() - ts) <= win;
+}
+
+async function chefVoidItem(orderId, itemIndex) {
+  const order = allOrders.find(o => o._id === orderId);
+  if (!order) return;
+  if (!canEditOrder(order)) { showNotif('🔒','Locked','Order is outside the edit window.'); return; }
+
+  const items = [...(order.items || [])];
+  if (!items[itemIndex]) return;
+  const item = items[itemIndex];
+  if (item.voided) return;
+
+  items[itemIndex] = { ...item, voided: true, voidedBy: currentEmployee?.name || 'Chef', voidedAt: Date.now() };
+  const newTotal = items.filter(i => !i.voided).reduce((s, i) => s + (i.unitPrice || i.price || 0) * (i.qty || 1), 0);
+
+  await db.collection('orders').doc(orderId).update({
+    items,
+    total: newTotal,
+    editLog: firebase.firestore.FieldValue.arrayUnion({
+      time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),
+      reason: `Item voided: ${item.name}`,
+      by: currentEmployee?.name || 'Chef'
+    }),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(e => console.warn(e));
+}
+  
 function buildStatusButtons(o) {
   const id = o._id;
   let btns = '';
