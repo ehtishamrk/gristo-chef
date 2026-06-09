@@ -1422,13 +1422,13 @@ function renderMenu86List() {
 
     const isAvailable = item.avail !== false;
 
-    card.innerHTML = `
+card.innerHTML = `
       <div>
         <div class="menu86-name">${escHtml(item.name || 'Unnamed item')}</div>
         <div class="menu86-cat">${escHtml(item.cat || item.category || '')} · ${isAvailable ? 'Available' : 'Currently off'}</div>
       </div>
 
-      <button class="btn btn-red btn-sm" onclick="requestMenuRemoval('${item._id}', '${escHtml(item.name || '')}')">
+      <button class="btn btn-red btn-sm menu86-remove-btn" data-id="${escHtml(item._id)}" data-name="${escHtml(item.name || '')}">
         Request Remove
       </button>
     `;
@@ -1437,6 +1437,15 @@ function renderMenu86List() {
   });
 }
 
+// Event delegation for menu86 remove buttons (avoids onclick quote-escaping bugs)
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.menu86-remove-btn');
+  if (!btn) return;
+  const itemId   = btn.dataset.id;
+  const itemName = btn.dataset.name;
+  requestMenuRemoval(itemId, itemName);
+});
+  
 async function requestMenuRemoval(itemId, itemName) {
   if (!confirm(`Request admin to remove "${itemName}" from the menu?`)) return;
 
