@@ -1617,24 +1617,22 @@ async function requestMenuRemoval(itemId, itemName) {
   if (!confirm(`Request admin to remove "${itemName}" from the menu?`)) return;
 
   try {
-    await db.collection('admin_notifications').add({
-      type: 'menu_change_request',
-      action: 'remove_item',
-      title: 'Menu Removal Request - ' + itemName,
-      message: `${currentEmployee?.name || 'Chef'} requests to remove "${itemName}" from the menu.`,
+    await db.collection('purchase_orders').add({
+      type: 'menu_removal_request',
       itemId,
       itemName,
-      requestedBy: currentEmployee?.name || 'Chef',
+      requestedBy:    currentEmployee?.name || 'Chef',
       requestedByUid: currentUser?.uid || '',
-      status: 'pending',
-      read: false,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      status:         'pending',
+      urgency:        'normal',
+      notes:          `Please remove "${itemName}" from the menu (86'd).`,
+      items:          [{ name: `REMOVE FROM MENU: ${itemName}`, qty: '—', unit: '—' }],
+      createdAt:      firebase.firestore.FieldValue.serverTimestamp()
     });
-
     toast(`Removal request sent for "${itemName}"`, 'success');
   } catch (e) {
     console.warn('menu removal request:', e);
-    toast('Error sending removal request', 'error');
+    toast(`Error: ${e.message}`, 'error');
   }
 }
 
